@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bell's Palsy Probability Detector</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .bttn {
+            flex: 1;
+            padding: 12px;
+            background: #f1f3f4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .bttn.active {
+            background: #4285f4;
+            color: white;
+        }
+        
+        #fileSelectionContainer, #urlContainer {
+            margin-top: 15px;
+        }
+        
+        #fileMock {
+            padding: 10px;
+            background: #4285f4;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        #fileName {
+            width: 100%;
+            padding: 8px;
+            border: 1px dashed #ccc;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        #submitBtn {
+            width: 100%;
+            padding: 15px;
+            background: #34a853;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        #resultContainer {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        /* Results styling */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            padding: 20px;
+            text-align: center;
+            background: #ffebee;
+            border-radius: 5px;
+        }
+        
+        .result-container {
+            margin-bottom: 30px;
+        }
+        
+        .probability-meter {
+            height: 25px;
+            background: #ecf0f1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
+            transition: width 0.5s ease;
+        }
+        
+        .probability-text {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .recommendation {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .recommendation.high {
+            background: #ffebee;
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .recommendation.medium {
+            background: #fff8e1;
+            border-left: 5px solid #f1c40f;
+        }
+        
+        .recommendation.low {
+            background: #e8f5e9;
+            border-left: 5px solid #2ecc71;
+        }
+        
+        .raw-data {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bell's Palsy Probability Detector</h1>
+        <p class="subtitle">Upload an image to check for facial asymmetry probability</p>
+        
+        <div class="input-section">
+            <form id="inputForm">
+                <div class="form-group">
+                    <label for="api_key">API Key</label>
+                    <input type="text" id="api_key" value="DIggXL01Uhbk48cAXu3V">
+                </div>
+                
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <input type="text" id="model" value="stroke-aware-bell-s-palsy-pjbqz">
+                </div>
+                
+                <div class="form-group">
+                    <label for="version">Version</label>
+                    <input type="text" id="version" value="8">
+                </div>
+                
+                <div class="button-group">
+                    <div id="computerButton" class="bttn active" data-value="upload">Upload Image</div>
+                    <div id="urlButton" class="bttn" data-value="url">Image URL</div>
+                </div>
+                
+                <div id="fileSelectionContainer">
+                    <div id="fileMock">Choose Image File</div>
+                    <input type="file" id="file" style="display:none">
+                    <input type="text" id="fileName" placeholder="No file selected" readonly>
+                </div>
+                
+                <div id="urlContainer" style="display:none">
+                    <input type="text" id="url" placeholder="Enter image URL">
+                </div>
+                
+                <button id="submitBtn" type="submit">Check for Bell's Palsy</button>
+            </form>
+        </div>
+        
+        <div id="resultContainer">
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script>
+    $(function() {
+        // Initialize form values
+        $('#model').val("stroke-aware-bell-s-palsy-pjbqz");
+        $('#version').val("8");
+        $('#api_key').val("DIggXL01Uhbk48cAXu3V");
+
+        setupButtonListeners();
+        retrieveDefaultValuesFromLocalStorage();
+    });
+
+    var infer = function() {
+        $('#output').html("<div class='loading'>Analyzing image for Bell's Palsy probability...</div>");
+        $("#resultContainer").show();
+        $('html, body').animate({ scrollTop: $(document).height() }, 500);
+
+        getSettingsFromForm(function(settings) {
+            settings.error = function(xhr) {
+                $('#output').html("<div class='error'>Error analyzing image. Please check your API key and try again.</div>");
+            };
+
+            $.ajax(settings).then(function(response) {
+                // Process predictions to show percentage
+                var predictions = response.predictions || [];
+                var bpPrediction = predictions.find(p => p.class.toLowerCase().includes('bell'));
+                var confidence = bpPrediction ? Math.round(bpPrediction.confidence * 100) : 0;
+                
+                // Create visual results
+                var resultHtml = `
+                    <div class="result-container">
+                        <div class="probability-meter">
+                            <div class="probability-bar" style="width: ${confidence}%"></div>
+                        </div>
+                        <div class="probability-text" style="color: ${getColorForConfidence(confidence)}">
+                            ${confidence}% probability of Bell's Palsy
+                        </div>
+                        ${getRecommendation(confidence)}
+                    </div>
+                    <details>
+                        <summary>View raw data</summary>
+                        <pre class="raw-data">${JSON.stringify(response, null, 4)}</pre>
+                    </details>
+                `;
+                
+                $('#output').html(resultHtml);
+                $('html, body').animate({ scrollTop: $(document).height() }, 500);
+            });
+        });
+    };
+
+    function getColorForConfidence(confidence) {
+        if (confidence > 70) return '#e74c3c';
+        if (confidence > 30) return '#f39c12';
+        return '#2ecc71';
+    }
+
+    function getRecommendation(confidence) {
+        if (confidence > 70) {
+            return `<div class="recommendation high">
+                <strong>High probability of Bell's Palsy detected</strong><br>
+                This result suggests significant facial asymmetry. We strongly recommend consulting a neurologist for proper evaluation and treatment.
+            </div>`;
+        } else if (confidence > 30) {
+            return `<div class="recommendation medium">
+                <strong>Moderate probability of Bell's Palsy detected</strong><br>
+                Some facial asymmetry was detected. Consider monitoring symptoms and consulting a doctor if they persist or worsen.
+            </div>`;
+        } else {
+            return `<div class="recommendation low">
+                <strong>Low probability of Bell's Palsy detected</strong><br>
+                No significant facial asymmetry was found. This result suggests normal facial symmetry.
+            </div>`;
+        }
+    }
+
+    var retrieveDefaultValuesFromLocalStorage = function() {
+        try {
+            var api_key = localStorage.getItem("rf.api_key");
+            var model = localStorage.getItem("rf.model");
+            var version = localStorage.getItem("rf.version");
+
+            if (api_key) $('#api_key').val(api_key);
+            if (model) $('#model').val(model);
+            if (version) $('#version').val(version);
+        } catch (e) {
+            // localStorage not available
+        }
+
+        $('#model').change(function() {
+            localStorage.setItem('rf.model', $(this).val());
+        });
+
+        $('#api_key').change(function() {
+            localStorage.setItem('rf.api_key', $(this).val());
+        });
+
+        $('#version').change(function() {
+            localStorage.setItem('rf.version', $(this).val());
+        });
+    };
+
+    var setupButtonListeners = function() {
+        // Run inference when form is submitted
+        $('#inputForm').submit(function() {
+            infer();
+            return false;
+        });
+
+        // Toggle between upload and URL options
+        $('.bttn').click(function() {
+            $(this).parent().find('.bttn').removeClass('active');
+            $(this).addClass('active');
+
+            if($('#computerButton').hasClass('active')) {
+                $('#fileSelectionContainer').show();
+                $('#urlContainer').hide();
+            } else {
+                $('#fileSelectionContainer').hide();
+                $('#urlContainer').show();
+            }
+            return false;
+        });
+
+        // Wire styled button to hidden file input
+        $('#fileMock').click(function() {
+            $('#file').click();
+        });
+
+        // Show filename when file is selected
+        $("#file").change(function() {
+            var path = $(this).val().replace(/\\/g, "/");
+            var filename = path.split("/").pop();
+            $('#fileName').val(filename);
+        });
+    };
+
+    var getSettingsFromForm = function(cb) {
+        var settings = {
+            method: "POST",
+        };
+
+        var parts = [
+            "https://classify.roboflow.com/",
+            $('#model').val(),
+            "/",
+            $('#version').val(),
+            "?api_key=" + $('#api_key').val()
+        ];
+
+        var method = $('.button-group .active').attr('data-value');
+        if(method == "upload") {
+            var file = $('#file').get(0).files[0];
+            if(!file) return alert("Please select an image file.");
+
+            getBase64fromFile(file).then(function(base64image) {
+                settings.url = parts.join("");
+                settings.data = base64image;
+                cb(settings);
+            });
+        } else {
+            var url = $('#url').val();
+            if(!url) return alert("Please enter an image URL");
+
+            parts.push("&image=" + encodeURIComponent(url));
+            settings.url = parts.join("");
+            cb(settings);
+        }
+    };
+
+    var getBase64fromFile = function(file) {
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function() {
+                resolve(reader.result);
+            };
+            reader.onerror = function(error) {
+                reject(error);
+            };
+        });
+    };
+    </script>
+</body>
+</html>
